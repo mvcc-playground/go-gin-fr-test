@@ -16,7 +16,7 @@ type Engine struct {
 
 // New cria um Engine já configurado
 func New(g *gin.Engine) *Engine {
-	logger := newLogger()
+	logger, _ := zap.NewProduction()
 	cronManager := NewCronManager(logger)
 
 	app := &Engine{
@@ -78,6 +78,11 @@ func (e *Engine) convertHandlers(handlers []HandlerFunc) []gin.HandlerFunc {
 	return ginHandlers
 }
 
+// Use adiciona middleware ao engine
+func (e *Engine) Use(handlers ...HandlerFunc) {
+	e.Engine.Use(e.convertHandlers(handlers)...)
+}
+
 // GET é um atalho para router.Handle("GET", path, handlers)
 func (e *Engine) GET(relativePath string, handlers ...HandlerFunc) {
 	e.Engine.GET(relativePath, e.convertHandlers(handlers)...)
@@ -131,11 +136,6 @@ func (e *Engine) Match(methods []string, relativePath string, handlers ...Handle
 // Group cria um novo grupo de rotas
 func (e *Engine) Group(relativePath string, handlers ...HandlerFunc) *gin.RouterGroup {
 	return e.Engine.Group(relativePath, e.convertHandlers(handlers)...)
-}
-
-// Use adiciona middleware ao engine
-func (e *Engine) Use(handlers ...HandlerFunc) {
-	e.Engine.Use(e.convertHandlers(handlers)...)
 }
 
 // StaticFile registra uma única rota para servir um único arquivo
