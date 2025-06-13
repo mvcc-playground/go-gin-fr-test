@@ -16,7 +16,7 @@ type Engine struct {
 
 // New cria um Engine já configurado
 func New(g *gin.Engine) *Engine {
-	logger, _ := zap.NewProduction()
+	logger := newLogger()
 	cronManager := NewCronManager(logger)
 
 	app := &Engine{
