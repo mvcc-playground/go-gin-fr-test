@@ -1,0 +1,83 @@
+package main
+
+import (
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"github.com/gin-gonic/gin"
+	"github.com/matheusvcouto/go-test/internal/app"
+)
+
+// Benchmark para testar a performance da implementação otimizada
+func BenchmarkEngineOptimized(b *testing.B) {
+	gin.SetMode(gin.ReleaseMode)
+	router := gin.New()
+	engine := app.New(router)
+
+	engine.GET("/test", func(ctx *app.Context) {
+		ctx.JSON(200, gin.H{"message": "test"})
+	})
+
+	req, _ := http.NewRequest("GET", "/test", nil)
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		w := httptest.NewRecorder()
+		engine.ServeHTTP(w, req)
+	}
+}
+
+// Benchmark para comparar com Gin puro
+func BenchmarkGinPure(b *testing.B) {
+	gin.SetMode(gin.ReleaseMode)
+	router := gin.New()
+
+	router.GET("/test", func(c *gin.Context) {
+		c.JSON(200, gin.H{"message": "test"})
+	})
+
+	req, _ := http.NewRequest("GET", "/test", nil)
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+	}
+}
+
+// Benchmark para testar múltiplos handlers
+func BenchmarkEngineMultipleHandlers(b *testing.B) {
+	gin.SetMode(gin.ReleaseMode)
+	router := gin.New()
+	engine := app.New(router)
+
+	// Middleware
+	middleware1 := func(ctx *app.Context) {
+		ctx.Next()
+	}
+	middleware2 := func(ctx *app.Context) {
+		ctx.Next()
+	}
+
+	// Handler principal
+	handler := func(ctx *app.Context) {
+		ctx.JSON(200, gin.H{"message": "test"})
+	}
+
+	engine.GET("/test", middleware1, middleware2, handler)
+
+	req, _ := http.NewRequest("GET", "/test", nil)
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		w := httptest.NewRecorder()
+		engine.ServeHTTP(w, req)
+	}
+}
