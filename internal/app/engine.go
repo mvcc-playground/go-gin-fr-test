@@ -78,6 +78,26 @@ func (e *Engine) convertHandlers(handlers []HandlerFunc) []gin.HandlerFunc {
 	return ginHandlers
 }
 
+// AdaptGin converte gin.HandlerFunc para HandlerFunc customizado
+// Permite usar middlewares nativos do Gin com o Context customizado
+func (e *Engine) AdaptGin(ginHandler gin.HandlerFunc) HandlerFunc {
+	return func(c *Context) {
+		ginHandler(c.Context)
+	}
+}
+
+// AdaptGinMany converte múltiplos gin.HandlerFunc para HandlerFunc customizados
+func (e *Engine) AdaptGinMany(ginHandlers ...gin.HandlerFunc) []HandlerFunc {
+	adapted := make([]HandlerFunc, len(ginHandlers))
+	for i, h := range ginHandlers {
+		handler := h // captura para evitar closure issues
+		adapted[i] = func(c *Context) {
+			handler(c.Context)
+		}
+	}
+	return adapted
+}
+
 // Use adiciona middleware ao engine
 func (e *Engine) Use(handlers ...HandlerFunc) {
 	e.Engine.Use(e.convertHandlers(handlers)...)

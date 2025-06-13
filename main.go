@@ -12,7 +12,10 @@ import (
 
 func main() {
 	// Cria o engine customizado - cron inicia automaticamente
-	r := app.New(gin.Default())
+	r := app.New(gin.New())
+	r.Use(r.AdaptGin(gin.Recovery()), r.AdaptGin(gin.Logger()))
+
+	// Middleware personalizado
 	r.Use(func(c *app.Context) {
 		c.Logger().Info("Request received", zap.String("method", c.Request.Method), zap.String("path", c.Request.URL.Path))
 		c.Next() // Continua para o próximo handler
